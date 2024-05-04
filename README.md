@@ -33,7 +33,7 @@ The Shroud dropper searches for instances of `svchost.exe` running under the cur
 
 Injection is handled by dynamically-linked calls to standard API functions like `VirtualAllocEx` and `WriteProcessMemory`.
 
-Execution is handled similarly with `CreateRemoteThread`.
+Execution is handled by a stomp for an `ntdll.dll` function not used in `RuntimeBroker`. The final function call is handled with `CreateRemoteThread`.
 
 Future versions will improve various aspects of the tool.
 

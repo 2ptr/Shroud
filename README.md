@@ -35,14 +35,9 @@ Injection is handled by dynamically-linked calls to standard API functions like 
 
 Execution is handled similarly with `CreateRemoteThread`.
 
-## Results
-Although quite primitive, Shroud is able to evade the vast majority of AV engines on VirusTotal:
-
-![Virustotal](./vt.png)
-
-Future methods will improve this.
+Future versions will improve various aspects of the tool.
 
 ## To-Do
-- Encryption (AES, RC4, XOR)
+- Encryption (AES, RC4)
 - "Aggressive" mode (enumerate autoescalation and persistence methods)
 - Hash strings for API calls

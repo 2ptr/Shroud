@@ -27,7 +27,7 @@ options:
 ```
 
 ## Current Technique
-Currently, Shroud can use shellcode templates via `msfvenom` or custom shellcode files. These payloads are delta-encoded using [https://github.com/RedSiege/Delta-Encoder](Red Siege's encoder).
+Currently, Shroud can use shellcode templates via `msfvenom` or custom shellcode files. These payloads are delta-encoded using [Red Siege's encoder](https://github.com/RedSiege/Delta-Encoder). XOR is also available.
 
 The Shroud dropper searches for instances of `svchost.exe` running under the current user context and launches a `RuntimeBroker.exe` with a spoofed PPID of the `svchost.exe` process.
 

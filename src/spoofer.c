@@ -76,7 +76,7 @@ BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT
 		&Pi
 	);
 	f_WaitForSingleObject rWaitForSingleObject = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "WaitForSingleObject");
-	rWaitForSingleObject(hThread, 100);
+	rWaitForSingleObject(hThread, 1000);
 
 	// Returns and cleanup
 	*dwProcessId = Pi.dwProcessId;

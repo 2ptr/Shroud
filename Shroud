@@ -5,11 +5,11 @@ import os
 from itertools import cycle
 
 print("""
-.▄▄ ·  ▄ .▄▄▄▄        ▄• ▄▌·▄▄▄▄  
-▐█ ▀. ██▪▐█▀▄ █· ▄█▀▄ █▪██▌██· ██ 
-▄▀▀▀█▄██▀▀█▐▀▀▄ ▐█▌.▐▌█▌▐█▌▐█▪ ▐█▌
-▐█▄▪▐███▌▐▀▐█•█▌▐█▌.▐▌▐█▄█▌██. ██ 
- ▀▀▀▀ ▀▀▀ ·.▀  ▀ ▀█▄▀▪ ▀▀▀ ▀▀▀▀▀•                                                                                          
+.▄▄ ·   ▄ .▄ ▄▄▄        ▄• ▄▌ ·▄▄▄▄  
+▐█ ▀.  ██▪▐█ ▀▄ █· ▄█▀▄ █▪██▌ ██· ██ 
+▄▀▀▀█▄ ██▀▀█ ▐▀▀▄ ▐█▌.▐▌█▌▐█▌ ▐█▪ ▐█▌
+▐█▄▪▐█ ██▌▐▀ ▐█•█▌▐█▌.▐▌▐█▄█▌ ██. ██ 
+ ▀▀▀▀  ▀▀▀ · .▀  ▀ ▀█▄▀▪ ▀▀▀  ▀▀▀▀▀•                                                                                          
 			by twopoint
 				  """)
 parser = argparse.ArgumentParser(
@@ -37,8 +37,6 @@ encgroup.add_argument('--delta', help='Use delta encoding from Red Siege\'s delt
 encgroup.add_argument('--dont-encrypt', help='Don\'t encrypt the payload.', action="store_true")
 
 # Generation options (add camo stuff)
-parser.add_argument('--process', help='Target process name for creation or remote injection. Default is RuntimeBroker.exe.')
-parser.add_argument('--export', help='Exported function name for DLL.')
 
 parser.add_argument('output', help='Output dropper file. Specify .exe or .dll.')
 

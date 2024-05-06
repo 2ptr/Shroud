@@ -222,11 +222,11 @@ def aesBlob(key, iv):
 def main():
 	#### Generate templates if necessary
 	if args.msf or args.shell:
-		print(f"[~] Generating shellcode from template. (IP: {args.lhost}, PORT: {args.lport})")
+		print(f"[*] Generating shellcode from template. (IP: {args.lhost}, PORT: {args.lport})")
 		generateTemplate()
 		shellcode = readShellcode("./output/shellcode.raw")
 	elif args.file:
-		print(f"[!] Using custom shellcode file {args.file}")
+		print(f"[*] Using custom shellcode file {args.file}")
 		shellcode = readShellcode(args.file)
 
 	#### Encrypt payload

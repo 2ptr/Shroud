@@ -4,26 +4,39 @@ Evasive malware generation tool for quick shellcode droppers. A lightweight spir
 ## Usage
 
 ```
+
 .▄▄ ·  ▄ .▄▄▄▄        ▄• ▄▌·▄▄▄▄  
 ▐█ ▀. ██▪▐█▀▄ █· ▄█▀▄ █▪██▌██· ██ 
 ▄▀▀▀█▄██▀▀█▐▀▀▄ ▐█▌.▐▌█▌▐█▌▐█▪ ▐█▌
 ▐█▄▪▐███▌▐▀▐█•█▌▐█▌.▐▌▐█▄█▌██. ██ 
- ▀▀▀▀ ▀▀▀ ·.▀  ▀ ▀█▄▀▪ ▀▀▀ ▀▀▀▀▀•                                          
-                                                
+ ▀▀▀▀ ▀▀▀ ·.▀  ▀ ▀█▄▀▪ ▀▀▀ ▀▀▀▀▀•                                                                                          
                         by twopoint
+                                  
+usage: Shroud [-h] (--file FILE | --msf | --shell) [-L LHOST] [-P LPORT] (--xor | --delta) [--dont-encrypt] [--process PROCESS] [--export EXPORT] output
+
 Generate evasive shellcode droppers.
 
 positional arguments:
   output                Output dropper file. Specify .exe or .dll.
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -L LHOST, --lhost LHOST
                         Listener IP for templates.
   -P LPORT, --lport LPORT
                         Listener port for templates.
-  --export EXPORT       Exported function name for DLL.
+  --dont-encrypt        Don't encrypt the payload. Default is AES-256
   --process PROCESS     Target process name for creation or remote injection. Default is RuntimeBroker.exe.
+  --export EXPORT       Exported function name for DLL.
+
+shellcode:
+  --file FILE           Custom shellcode file
+  --msf                 Generate a Meterpreter template payload.
+  --shell               Generate a reverse shell (cmd) template payload.
+
+encryption:
+  --xor                 Use XOR encryption.
+  --delta               Use delta encoding from Red Siege's delta encoder.
 ```
 
 ## Current Technique
@@ -44,4 +57,5 @@ The final function call is handled with `CreateRemoteThread`. I may change this 
 ## To-Do
 - AES-256
 - String hashing / polymorphism
+- DLL format
 - Persistence options

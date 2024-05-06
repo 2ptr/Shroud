@@ -5,11 +5,11 @@ Malware generation tool for custom shellcode droppers. Intended to be a lightwei
 
 ```
 
-.▄▄ ·  ▄ .▄▄▄▄        ▄• ▄▌·▄▄▄▄  
-▐█ ▀. ██▪▐█▀▄ █· ▄█▀▄ █▪██▌██· ██ 
-▄▀▀▀█▄██▀▀█▐▀▀▄ ▐█▌.▐▌█▌▐█▌▐█▪ ▐█▌
-▐█▄▪▐███▌▐▀▐█•█▌▐█▌.▐▌▐█▄█▌██. ██ 
- ▀▀▀▀ ▀▀▀ ·.▀  ▀ ▀█▄▀▪ ▀▀▀ ▀▀▀▀▀•                                                                                          
+.▄▄ ·   ▄ .▄ ▄▄▄        ▄• ▄▌ ·▄▄▄▄  
+▐█ ▀.  ██▪▐█ ▀▄ █· ▄█▀▄ █▪██▌ ██· ██ 
+▄▀▀▀█▄ ██▀▀█ ▐▀▀▄ ▐█▌.▐▌█▌▐█▌ ▐█▪ ▐█▌
+▐█▄▪▐█ ██▌▐▀ ▐█•█▌▐█▌.▐▌▐█▄█▌ ██. ██ 
+ ▀▀▀▀  ▀▀▀ · .▀  ▀ ▀█▄▀▪ ▀▀▀  ▀▀▀▀▀•                                                                                       
                         by twopoint
                                   
 usage: Shroud [-h] (--file FILE | --msf | --shell) [-L LHOST] [-P LPORT] (--xor | --delta) [--dont-encrypt] [--process PROCESS] [--export EXPORT] output

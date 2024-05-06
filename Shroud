@@ -181,7 +181,7 @@ def deltaBlob(offset_arr,raw_sc,sc_len):
 	
 	return blob
 
-# XOR encryption 
+# XOR encryption - probably need to do 0x00 and 0xFF checks here for anti reversing key 
 def encryptXOR(shellcode):
 
 	key = os.urandom(32) # XOR KEY LENGTH!
@@ -227,7 +227,6 @@ def aesBlob(key, iv):
 	blob = "HASDFASDF!!"
 	return blob
 
-
 def main():
 	#### Generate templates if necessary
 	if args.msf or args.shell:
@@ -251,7 +250,6 @@ def main():
 		writePayload(shellcode, None)
 	else: # DEFAULT - AES-256
 		shellcode, key, iv = encryptAES(shellcode)
-		print(shellcode)
 		writePayload(shellcode, aesBlob(key,iv))
 
 	#### Compile

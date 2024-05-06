@@ -1,5 +1,5 @@
 # Shroud
-Evasive malware generation tool for quick shellcode droppers.
+Evasive malware generation tool for quick shellcode droppers. A lightweight spiritual successor to [Mallet](https://github.com/Jake123otte1/Mallet)
 
 ## Usage
 
@@ -38,6 +38,6 @@ Execution is handled by a stomp for an `ntdll.dll` function not used in `Runtime
 Future versions will improve various aspects of the tool.
 
 ## To-Do
-- Encryption (AES, RC4)
-- "Aggressive" mode (enumerate autoescalation and persistence methods)
-- Hash strings for API calls
+- AES-256
+- Persistence options
+- String hashing / polymorphism

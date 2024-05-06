@@ -1,5 +1,5 @@
 # Shroud
-Evasive malware generation tool for quick shellcode droppers. A lightweight spiritual successor to [Mallet](https://github.com/Jake123otte1/Mallet)
+Malware generation tool for custom shellcode droppers. Intended to be a lightweight spiritual successor to [Mallet](https://github.com/Jake123otte1/Mallet).
 
 ## Usage
 

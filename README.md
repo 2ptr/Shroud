@@ -56,6 +56,7 @@ The final function call is handled with `CreateRemoteThread`. I may change this 
 
 ## To-Do
 - AES-256
+- Alternative encryption implementations
 - String hashing / polymorphism
 - DLL format
 - Persistence options

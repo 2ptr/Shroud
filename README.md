@@ -59,3 +59,4 @@ The final function call is handled with `CreateRemoteThread`. I may change this 
 - String hashing / polymorphism
 - DLL format
 - Persistence options
+- Process hollowing and PE loading support

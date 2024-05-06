@@ -1,6 +1,10 @@
 # Shroud
 Malware generation tool for custom shellcode droppers. Intended to be a lightweight successor to [Mallet](https://github.com/Jake123otte1/Mallet).
 
+## Setup
+
+Use the `setup.sh` script in the `setup` folder to download required tools.
+
 ## Usage
 
 ```

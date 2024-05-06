@@ -27,17 +27,21 @@ options:
 ```
 
 ## Current Technique
-Currently, Shroud can use shellcode templates via `msfvenom` or custom shellcode files. These payloads are delta-encoded using [Red Siege's encoder](https://github.com/RedSiege/Delta-Encoder). XOR is also available.
+Currently, Shroud can use shellcode templates via `msfvenom` or custom shellcode files.
 
-The Shroud dropper searches for instances of `svchost.exe` running under the current user context and launches a `RuntimeBroker.exe` with a spoofed PPID of the `svchost.exe` process.
+Shroud has several encryption and encoding options. The default method is AES-256 encryption using [TinyAES](https://github.com/kokke/tiny-AES-c). Other options include XOR and deltas using [Red Siege's encoder](https://github.com/RedSiege/Delta-Encoder).
 
-Injection is handled by dynamically-linked calls to standard API functions like `VirtualAllocEx` and `WriteProcessMemory`.
+By default, Shroud launches a camoflauged (PPID, thread address, working directory) `RuntimeBroker.exe` process. Future updates will allow you to specify victim processes and camoflauge parameters. 
 
-Execution is handled by a stomp for an `ntdll.dll` function not used in `RuntimeBroker`. The final function call is handled with `CreateRemoteThread`.
+Strings are currently hardcoded. Hashing will be the first major update.
 
-Future versions will improve various aspects of the tool.
+Injection is handled by dynamically-linked calls to standard API functions like `VirtualAllocEx` and `WriteProcessMemory`. I would strongly prefer to use remote file mapping, but I have yet to find a method for cross-compiling `OneCore.lib`. 
+
+Execution is handled by a stomp for an `ntdll.dll` function not used in `RuntimeBroker`. Currently this is hardcoded to be `RtlFreeMemoryStream`. Future updates will choose a random (hashed) `ntdll.dll` export before compiling.
+
+The final function call is handled with `CreateRemoteThread`. I may change this in the future.
 
 ## To-Do
 - AES-256
-- Persistence options
 - String hashing / polymorphism
+- Persistence options

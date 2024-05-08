@@ -9,10 +9,16 @@
 // Spoofer
 BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessID);
 BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT DWORD* dwProcessId, OUT HANDLE* hProcess, OUT HANDLE* hThread);
+
 typedef HANDLE(*f_CreateToolhelp32Snapshot)(DWORD, DWORD);
 typedef BOOL(*f_Process32First)(HANDLE, LPPROCESSENTRY32);
 typedef BOOL(*f_Process32Next)(HANDLE, LPPROCESSENTRY32);
 typedef HANDLE(*f_OpenProcess)(DWORD, BOOL, DWORD);
+
+typedef DWORD(*f_GetEnvironmentVariableA)(LPCSTR,LPSTR,DWORD);
+typedef BOOL(*f_InitializeProcThreadAttributeList)(LPPROC_THREAD_ATTRIBUTE_LIST,DWORD,DWORD,PSIZE_T);
+typedef BOOL(*f_UpdateProcThreadAttribute)(LPPROC_THREAD_ATTRIBUTE_LIST,DWORD,DWORD_PTR,PVOID,SIZE_T,PVOID,PSIZE_T);
+typedef BOOL(*f_CreateProcessA)(LPCSTR,LPSTR,LPSECURITY_ATTRIBUTES,LPSECURITY_ATTRIBUTES,BOOL,DWORD,LPVOID,LPCSTR,LPSTARTUPINFOA,LPPROCESS_INFORMATION);
 
 
 // IAT utils

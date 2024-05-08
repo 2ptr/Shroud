@@ -46,7 +46,7 @@ encryption:
 ## Current Technique
 Shroud can use shellcode templates via `msfvenom` or custom shellcode files.
 
-The tool features several encryption and encoding options. The default method is AES-256 encryption using [TinyAES](https://github.com/kokke/tiny-AES-c). Other options include XOR and deltas using [Red Siege's encoder](https://github.com/RedSiege/Delta-Encoder).
+The tool features several encryption and encoding options. The default method is RC4 encryption with a XOR'd key brute-force decrypted at runtime. Other options include XOR and deltas using [Red Siege's encoder](https://github.com/RedSiege/Delta-Encoder).
 
 By default, Shroud launches a camoflauged (PPID, thread address, working directory) `RuntimeBroker.exe` process. Future updates will allow you to specify victim processes and camoflauge parameters. 
 
@@ -57,9 +57,8 @@ Insertion is handled by dynamically-linked calls to standard API functions like 
 Execution is handled by a stomp for an `ntdll.dll` function not used in `RuntimeBroker`. Currently this is hardcoded to be `RtlFreeMemoryStream`. Future updates will choose a random (hashed) `ntdll.dll` export before compiling. The final call is `CreateRemoteThread`.
 
 ## To-Do
-- AES-256
-- Alternative encryption implementations
 - String hashing / polymorphism
 - DLL format
 - Persistence options
 - Process hollowing and PE loading support
+- AES-256 at some point

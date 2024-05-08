@@ -234,7 +234,14 @@ def rc4Blob(encKey, firstbyte):
 		else:
 			blob += f"0x{encKey[i].to_bytes(1,byteorder='big').hex()} " + "};\n"
 	blob += "\tBruteDecryption(bFirstByte, pEncKey, sizeof(pEncKey), &pKey);\n"
-	blob += "RC4Encrypt(pKey, pPayload, sizeof(pEncKey), sPayloadSize);\n"
+	blob += "\tRc4Context ctx = { 0 };\n"
+	blob += "\tBYTE pTemp[sizeof(pPayload)];\n"
+	blob += "\trc4Init(&ctx, pKey, sizeof(pEncKey));\n"
+	blob += "\trc4Cipher(&ctx, pPayload, pTemp, sizeof(pPayload));\n"
+	blob += """\tfor (int i = 0;i < sizeof(pPayload);i++)
+	{
+		pPayload[i] = pTemp[i];
+	}\n"""
 
 	return blob
 

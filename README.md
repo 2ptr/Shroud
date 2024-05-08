@@ -61,6 +61,9 @@ Shroud is still early in development but performs well enough as of right now:
 
 ![VirusTotal](./setup/vt.png)
 
+## Issues
+Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeList` appear in the IAT, which isn't ideal. Unfortunately this isn't as simple a fix as I would have hoped. `InitializeProcThreadAttributeList` by design returns an error that seems to be difficult to handle with dynamically linked calls (as opposed to actually using the API). I will try to scrub these in the future but they are required for process camoflauge.
+
 ## To-Do
 - String hashing / polymorphism
 - Load NT calls instead of Win32

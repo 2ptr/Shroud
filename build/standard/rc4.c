@@ -21,7 +21,7 @@ BYTE BruteDecryption(IN BYTE bFirstByte, IN PBYTE pEncrypted, IN SIZE_T sEncrypt
 	*pDecrypted = pDecBuffer;
 }
 
-BOOL Rc4EncryptionViSystemFunc032(IN PBYTE pRc4Key, IN PBYTE pPayloadData, IN DWORD dwRc4KeySize, IN DWORD sPayloadSize) {
+BOOL RC4Encrypt(IN PBYTE pRc4Key, IN PBYTE pPayloadData, IN DWORD dwRc4KeySize, IN DWORD sPayloadSize) {
 
 	USTRING		Key = { .Buffer = pRc4Key, 		.Length = dwRc4KeySize,		.MaximumLength = dwRc4KeySize },
 		Data = { .Buffer = pPayloadData, 	.Length = sPayloadSize,		.MaximumLength = sPayloadSize };

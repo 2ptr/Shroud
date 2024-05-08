@@ -234,7 +234,7 @@ def rc4Blob(encKey, firstbyte):
 		else:
 			blob += f"0x{encKey[i].to_bytes(1,byteorder='big').hex()} " + "};\n"
 	blob += "\tBruteDecryption(bFirstByte, pEncKey, sizeof(pEncKey), &pKey);\n"
-	blob += "Rc4EncryptionViSystemFunc032(pKey, pPayload, sizeof(pEncKey), sPayloadSize);\n"
+	blob += "RC4Encrypt(pKey, pPayload, sizeof(pEncKey), sPayloadSize);\n"
 
 	return blob
 

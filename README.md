@@ -64,6 +64,7 @@ Shroud is still early in development but performs well enough as of right now:
 
 ## To-Do
 - String hashing / polymorphism
+- Load NT calls instead of Win32
 - DLL format
 - Persistence options
 - Process hollowing and PE loading support

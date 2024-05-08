@@ -249,17 +249,20 @@ def main():
 		shellcode = readShellcode(args.file)
 
 	#### Encrypt payload
-	print("[~] Encrypting payload...")
 
 	if args.xor: # XOR
+		print("[~] Encrypting payload with XOR...")
 		shellcode, key  = encryptXOR(shellcode)
 		writePayload(shellcode, xorBlob(key))
 	elif args.delta: # DELTA
+		print("[~] Encrypting payload with deltas...")
 		offset_arr,raw_sc,sc_len = encryptDelta(shellcode)
 		writePayload(shellcode, deltaBlob(offset_arr,raw_sc,sc_len))
 	elif args.dont_encrypt: # DON'T ENCRYPT
+		print("[!] NOT ENCRYPTING PAYLOAD...")
 		writePayload(shellcode, None)
-	else: # DEFAULT - AES-256
+	else: # DEFAULT - RC4
+		print("[~] Encrypting payload with RC4...")
 		shellcode, encKey, firstbyte = encryptRC4(shellcode)
 		writePayload(shellcode, rc4Blob(encKey,firstbyte))
 

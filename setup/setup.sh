@@ -1,4 +1,4 @@
 #!/bin/bash
 
 pip3 install -r requirements.txt
-sudo apt install x86_64-w64-mingw32-gcc -y
+sudo apt install gcc-mingw-w64-x86-64 -y

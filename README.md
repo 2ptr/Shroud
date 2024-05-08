@@ -56,6 +56,12 @@ Insertion is handled by dynamically-linked calls to standard API functions like 
 
 Execution is handled by a stomp for an `ntdll.dll` function not used in `RuntimeBroker`. Currently this is hardcoded to be `RtlFreeMemoryStream`. Future updates will choose a random (hashed) `ntdll.dll` export before compiling. The final call is `CreateRemoteThread`.
 
+## Performance
+
+Shroud is still early in development but performs well enough as of right now:
+
+![VirusTotal](./setup/vt.png)
+
 ## To-Do
 - String hashing / polymorphism
 - DLL format

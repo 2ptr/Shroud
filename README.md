@@ -66,5 +66,6 @@ Shroud is still early in development but performs well enough as of right now:
 - Load NT calls instead of Win32
 - Suspended process creation
 - DLL format
-- Persistence options (users, schtask, services)
-- AES-256 at some point
+- Normal persistence options (users, schtask, services)
+- Baked in hijack DLL persistence (.rsrc)
+- AES-256 (without Tiny-AES)

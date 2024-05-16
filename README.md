@@ -65,12 +65,13 @@ Shroud is still early in development but performs well enough as of right now:
 Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeList` appear in the IAT, which isn't ideal. Unfortunately this isn't as simple a fix as I would have hoped. `InitializeProcThreadAttributeList` by design returns an error that seems to be difficult to handle with dynamically linked calls (as opposed to actually using the API). I will try to scrub these in the future but they are required for process camoflauge.
 
 ## To-Do
+- Modularize the tool (im lazy)
 - Compile time hashes for several generation parameters:
     - Spoofed process (`RuntimeBroker`,`ctfmon`,`svchost`,`onedrive`,etc)
     - Stomped function (Any functions not used in the camo'd process pool from `ntdll.dll`)
     - API function addresses
 - Remove encryption and process name options (moving to one template, sorry)
-- Replace API with kernel calls (im lazy)
+- Replace API with kernel calls (im lazy, again)
 - DLL format
 - Normal persistence options (users, schtask, services)
 - I'd like to port this to .NET and look at in-memory execution via bytearrays

@@ -67,8 +67,6 @@ Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeLis
 ## To-Do
 - String hashing / polymorphism
 - Load NT calls instead of Win32
-- Suspended process creation
 - DLL format
 - Normal persistence options (users, schtask, services)
-- Baked in hijack DLL persistence (.rsrc)
-- AES-256 (without Tiny-AES)
+- I'd like to port this to .NET and look at in-memory execution via bytearrays

@@ -74,4 +74,4 @@ Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeLis
 - Replace API with kernel calls (im lazy, again)
 - DLL format
 - Normal persistence options (users, schtask, services)
-- I'd like to port this to .NET and look at in-memory execution via bytearrays
+- I'd like to port this to .NET and look at in-memory execution via bytearrays and HTTP stagers

@@ -70,3 +70,4 @@ Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeLis
 - DLL format
 - Normal persistence options (users, schtask, services)
 - I'd like to port this to .NET and look at in-memory execution via bytearrays
+- Remove other encryption options and clean up argparser

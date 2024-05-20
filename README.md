@@ -1,5 +1,5 @@
 # Shroud
-Malware generation tool for custom shellcode droppers. Intended to be a lightweight successor to [Mallet](https://github.com/Jake123otte1/Mallet). Currently used for on-disk droppers but eventually moving to in-memory execution only.
+Malware generation tool for custom shellcode droppers. Intended to be a lightweight successor to [Mallet](https://github.com/Jake123otte1/Mallet). 
 
 ## Setup
 

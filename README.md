@@ -66,12 +66,7 @@ Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeLis
 
 ## To-Do
 - Modularize the tool (im lazy)
-- Compile time hashes for several generation parameters:
-    - Spoofed process (`RuntimeBroker`,`ctfmon`,`svchost`,`onedrive`,etc)
-    - Stomped function (Any functions not used in the camo'd process pool from `ntdll.dll`)
-    - API function addresses
+- Incorporate SysWhispers
 - Remove encryption and process name options (moving to one template, sorry)
-- Replace API with kernel calls (im lazy, again)
 - DLL format
 - Normal persistence options (users, schtask, services)
-- I'd like to port this to .NET and look at in-memory execution via bytearrays and HTTP stagers

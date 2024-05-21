@@ -36,20 +36,14 @@ shellcode:
   --file FILE           Custom shellcode file
   --msf                 Generate a Meterpreter template payload.
   --shell               Generate a reverse shell (cmd) template payload.
-
-encryption:
-  --xor                 Use XOR encryption.
-  --delta               Use delta encoding from Red Siege's delta encoder.
 ```
 
 ## Current Technique
 Shroud can use shellcode templates via `msfvenom` or custom shellcode files.
 
-The tool features several encryption and encoding options. The default method is RC4 encryption with a XOR'd key brute-force decrypted at runtime. Other options include XOR and deltas using [Red Siege's encoder](https://github.com/RedSiege/Delta-Encoder).
+The tool features RC4 encryption with a XOR'd key brute-force decrypted at runtime.
 
-By default, Shroud launches a camoflauged (PPID, thread address, working directory) `RuntimeBroker.exe` process. Future updates will allow you to specify victim processes and camoflauge parameters. 
-
-Strings are currently hardcoded. Hashing will be the first major update.
+By default, Shroud launches a camoflauged process from a random list of innocuous Windows processes (`RuntimeBroker.exe`,`svchost.exe`,etc)
 
 Insertion is handled by dynamically-linked calls to standard API functions like `VirtualAllocEx` and `WriteProcessMemory`. I would strongly prefer to use remote file mapping, but I have yet to find a method for cross-compiling `OneCore.lib`. 
 
@@ -67,8 +61,9 @@ Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeLis
 ## To-Do
 - Modularize the tool (im lazy)
 - Work on version 2.0:
-    - SysWhispers for Nt calls
-    - Mapping injection
+    - SysWhispers 3
+    - Move to mapping injection via Nt calls
+    - Pre-compiled randomization for process camoflauge
 - Future ideas:
     - Remove encryption and process name options (moving to one template, sorry)
     - DLL format

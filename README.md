@@ -15,7 +15,7 @@ Clone the repo and use the `setup.sh` script in the `setup` folder to download r
  ▀▀▀▀  ▀▀▀ · .▀  ▀ ▀█▄▀▪ ▀▀▀  ▀▀▀▀▀•                                                                                       
                         by twopoint
                                   
-usage: Shroud [-h] (--file FILE | --msf | --shell) [-L LHOST] [-P LPORT] (--xor | --delta) [--dont-encrypt] [--process PROCESS] [--export EXPORT] output
+usage: Shroud [-h] (--file FILE | --msf | --shell) [-L LHOST] [-P LPORT] output
 
 Generate evasive shellcode droppers.
 
@@ -28,9 +28,6 @@ optional arguments:
                         Listener IP for templates.
   -P LPORT, --lport LPORT
                         Listener port for templates.
-  --dont-encrypt        Don't encrypt the payload. Default is AES-256
-  --process PROCESS     Target process name for creation or remote injection. Default is RuntimeBroker.exe.
-  --export EXPORT       Exported function name for DLL.
 
 shellcode:
   --file FILE           Custom shellcode file

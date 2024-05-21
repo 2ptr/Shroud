@@ -66,7 +66,10 @@ Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeLis
 
 ## To-Do
 - Modularize the tool (im lazy)
-- Incorporate SysWhispers
-- Remove encryption and process name options (moving to one template, sorry)
-- DLL format
-- Normal persistence options (users, schtask, services)
+- Work on version 2.0:
+    - SysWhispers for Nt calls
+    - Mapping injection
+- Future ideas:
+    - Remove encryption and process name options (moving to one template, sorry)
+    - DLL format
+    - Normal persistence options (users, schtask, services)

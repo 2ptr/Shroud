@@ -8,6 +8,7 @@ from random import randint
 def encryptRC4(shellcode):
 
     key = os.urandom(randint(35,100)) # Generate an RC4 key of random length 35 - 100 bytes
+    print(f"[!] RC4 key length: {len(key)}")
     firstbyte = key[0]
 
     # Encrypt the shellcode with the RC4 key

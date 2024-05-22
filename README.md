@@ -39,7 +39,7 @@ shellcode:
 ## Current Technique
 Shroud can use shellcode templates via `msfvenom` or custom shellcode files.
 
-The tool features RC4 encryption with a XOR'd key brute-force decrypted at runtime.
+The tool features RC4 and XOR decryption with some brute-forcing at runtime. The exact process may be found in `modules/encryption.py`.
 
 By default, Shroud launches a camoflauged process from a random list of innocuous Windows processes (`RuntimeBroker.exe`,`svchost.exe`,etc)
 
@@ -57,12 +57,10 @@ Shroud is still early in development but performs well enough as of right now:
 Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeList` appear in the IAT, which isn't ideal. Unfortunately this isn't as simple a fix as I would have hoped. `InitializeProcThreadAttributeList` by design returns an error that seems to be difficult to handle with dynamically linked calls (as opposed to actually using the API). I will try to scrub these in the future but they are required for process camoflauge.
 
 ## To-Do
-- Modularize the tool (im lazy)
 - Work on version 2.0:
     - SysWhispers 3
     - Move to mapping injection via Nt calls
     - Pre-compiled randomization for process camoflauge
 - Future ideas:
-    - Remove encryption and process name options (moving to one template, sorry)
     - DLL format
     - Normal persistence options (users, schtask, services)

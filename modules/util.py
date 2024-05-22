@@ -31,7 +31,11 @@ def readShellcode(filePath):
 # Compile to binary
 def compile(args):
 	if args.output.endswith(".exe"): # PE compilation
-		p = subprocess.run([f"x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include ./build/standard/* -o ./output/{args.output}"], shell=True, capture_output=True)
+		p = subprocess.run([f"x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include -masm=intel -Wall ./build/standard/* -o ./output/{args.output}"], shell=True, capture_output=True)
+
+	### FOR SYSWHISPERS:
+	# x86_64-w64-mingw32-gcc -I/usr/share/mingw-w64/include -masm=intel -Wall ./* -o run.exe
+	# JUST NEED THE C AND HEADER FILE
 
 	if args.output.endswith(".dll"): # DLL compilation (TO-DO)
 		print("WIP1")

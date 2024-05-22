@@ -4,7 +4,6 @@
 #include <tlhelp32.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <winternl.h>
 
 // Spoofer
 BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessID);

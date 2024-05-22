@@ -15,19 +15,20 @@ Clone the repo and use the `setup.sh` script in the `setup` folder to download r
  ▀▀▀▀  ▀▀▀ · .▀  ▀ ▀█▄▀▪ ▀▀▀  ▀▀▀▀▀•                                                                                       
                         by twopoint
                                   
-usage: Shroud [-h] (--file FILE | --msf | --shell) [-L LHOST] [-P LPORT] output
+usage: Shroud [-h] (--file FILE | --msf | --shell) [-L LHOST] [-P LPORT] [--dont-encrypt] output
 
 Generate evasive shellcode droppers.
 
 positional arguments:
   output                Output dropper file. Specify .exe or .dll.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -L LHOST, --lhost LHOST
                         Listener IP for templates.
   -P LPORT, --lport LPORT
                         Listener port for templates.
+  --dont-encrypt        Don't encrypt the payload.
 
 shellcode:
   --file FILE           Custom shellcode file

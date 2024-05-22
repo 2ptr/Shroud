@@ -56,14 +56,14 @@ def main():
 		writePayload(shellcode, None)
 
 	else: # DEFAULT - RC4
-		print("[~] Encrypting payload with RC4...")
+		print("[~] Encrypting payload...")
 		shellcode, encKey, firstbyte = encryptRC4(shellcode)
 		writePayload(shellcode, rc4Blob(encKey,firstbyte))
 
 	#### Compile
 	print("[~] Compiling...")
 	compile(args)
-	
+
 
 if __name__ == '__main__':
 	main()

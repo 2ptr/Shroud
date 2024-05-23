@@ -58,9 +58,8 @@ Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeLis
 
 ## To-Do
 - Work on version 2.0:
-    - SysWhispers 3
-    - Move to mapping injection via Nt calls
-    - Pre-compiled randomization for process camoflauge
+    - Function stomp via mapping injection at address
+    - More host processes
 - Future ideas:
     - DLL format
     - Normal persistence options (users, schtask, services)

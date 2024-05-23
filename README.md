@@ -41,11 +41,9 @@ Shroud can use shellcode templates via `msfvenom` or custom shellcode files.
 
 The tool features RC4 and XOR decryption with some brute-forcing at runtime. The exact process may be found in `modules/encryption.py`.
 
-By default, Shroud launches a camoflauged process from a random list of innocuous Windows processes (`RuntimeBroker.exe`,`svchost.exe`,etc)
+By default, Shroud launches a camoflauged `RuntimeBroker.exe` process. This will eventually instead be one of a variety of innocuous windows processes (`ctfmon.exe`,`svchost.exe`,etc).
 
-Insertion is handled by SysWhispers indirect syscalls to normal calls like `NtProtectVirtualMemory`. However, the base address is an exported function from `ntdll.dll` for thread address camo.
-
-Execution is just `NtCreateThreadEx`.
+Insertion is handled by SysWhispers indirect syscalls to normal calls like `NtProtectVirtualMemory`. However, the base address is an exported function from `ntdll.dll` for thread address camo. Execution is just `NtCreateThreadEx`.
 
 ## Performance
 

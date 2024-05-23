@@ -43,9 +43,9 @@ The tool features RC4 and XOR decryption with some brute-forcing at runtime. The
 
 By default, Shroud launches a camoflauged process from a random list of innocuous Windows processes (`RuntimeBroker.exe`,`svchost.exe`,etc)
 
-Insertion is handled by dynamically-linked calls to standard API functions like `VirtualAllocEx` and `WriteProcessMemory`. I would strongly prefer to use remote file mapping, but I have yet to find a method for cross-compiling `OneCore.lib`. 
+Insertion is handled by SysWhispers indirect syscalls to normal calls like `NtProtectVirtualMemory`. However, the base address is an exported function from `ntdll.dll` for thread address camo.
 
-Execution is handled by a stomp for an `ntdll.dll` function not used in any of the selected processes. Currently this is hardcoded to be `RtlFreeMemoryStream`. Future updates will choose a random (hashed) `ntdll.dll` export before compiling. The final call is `CreateRemoteThread`.
+Execution is just `NtCreateThreadEx`.
 
 ## Performance
 
@@ -54,7 +54,10 @@ Shroud is still early in development but performs well enough as of right now:
 ![VirusTotal](./setup/vt.png)
 
 ## Issues
-Currently, `InitializeProcThreadAttributeList` and `UpdateProcThreadAttributeList` appear in the IAT, which isn't ideal. Unfortunately this isn't as simple a fix as I would have hoped. `InitializeProcThreadAttributeList` by design returns an error that seems to be difficult to handle with dynamically linked calls (as opposed to actually using the API). I will try to scrub these in the future but they are required for process camoflauge.
+
+- Several hardcoded strings. I'd like to get everything in syscalls but there are some problems. Compile time hashing is not an issue as we are updating the shell every compilation but the `GetProcAddress` replacement I was using has since been signatured by MDE. I will need to rewrite but it will take some time.
+- Mapping injection issues. For whatever reason, my attempts to use `NtCreateSection` as a part of mapping injection have been in vain when the target address is a remote `ntdll` export. I don't really know why, but I am not willing to give up the thread camo for only slightly better injection heuristics.
+- Some stomps don't work right now. I am not entirely sure why but some stomps (especially `Zw` calls) won't work. I can probably debug this by just reading NTSTATUSes but right now I have just been slowly removing failed stomps from the vulnerable export list.
 
 ## To-Do
 - Work on version 2.0:

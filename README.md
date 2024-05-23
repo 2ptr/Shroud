@@ -64,3 +64,4 @@ Shroud is still early in development but performs well enough as of right now:
 - Future ideas:
     - DLL format
     - Normal persistence options (users, schtask, services)
+    - Delivery methods (msbuild xml or reflecting .NET assembly)
